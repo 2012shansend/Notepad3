@@ -109,7 +109,8 @@ int  Encoding_SrcWeak(int iSrcWeakEnc)
 // ============================================================================
 
 
-bool Encoding_HasChanged(int iOriginalEncoding) {
+bool Encoding_HasChanged(int iOriginalEncoding) 
+{
   static int OriginalEncoding = CPI_NONE;
 
   if (iOriginalEncoding >= CPI_NONE) {
@@ -478,7 +479,6 @@ void Encoding_AddToComboboxEx(HWND hwnd, int idSel, bool bRecodeOnly) {
           StringCchCatN(wchBuf, COUNTOF(wchBuf), wchOEM, COUNTOF(wchOEM));
 
         cbei.iImage = (Encoding_IsValid(id) ? 0 : 1);
-
         cbei.lParam = (LPARAM)id;
         SendMessage(hwnd, CBEM_INSERTITEM, 0, (LPARAM)&cbei);
 

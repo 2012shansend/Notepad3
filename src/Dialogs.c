@@ -2464,13 +2464,10 @@ bool RecodeDlg(HWND hwnd,int *pidREncoding)
 //
 //  SelectDefLineEndingDlgProc()
 //
-//  Controls: 100 Combo
-//            IDC_CONSISTENTEOLS
-//            IDC_AUTOSTRIPBLANKS
 //
 INT_PTR CALLBACK SelectDefLineEndingDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LPARAM lParam)
 {
-  static int *piOption;
+  static int* piOption;
 
   switch(umsg)
   {
@@ -2486,12 +2483,13 @@ INT_PTR CALLBACK SelectDefLineEndingDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LP
         // Load options
         for (i = 0; i < 3; i++) {
           GetLngString(IDS_EOL_WIN+i,wch,COUNTOF(wch));
-          SendDlgItemMessage(hwnd,100,CB_ADDSTRING,0,(LPARAM)wch);
+          SendDlgItemMessage(hwnd, IDC_EOLMODELIST,CB_ADDSTRING,0,(LPARAM)wch);
         }
 
-        SendDlgItemMessage(hwnd,100,CB_SETCURSEL,(WPARAM)*piOption,0);
-        SendDlgItemMessage(hwnd,100,CB_SETEXTENDEDUI,true,0);
+        SendDlgItemMessage(hwnd, IDC_EOLMODELIST,CB_SETCURSEL,(WPARAM)*piOption,0);
+        SendDlgItemMessage(hwnd, IDC_EOLMODELIST,CB_SETEXTENDEDUI,true,0);
 
+        CheckDlgButton(hwnd,IDC_WARNINCONSISTENTEOLS, DlgBtnChk(Settings.WarnInconsistEOLs));
         CheckDlgButton(hwnd,IDC_CONSISTENTEOLS, DlgBtnChk(Settings.FixLineEndings));
         CheckDlgButton(hwnd,IDC_AUTOSTRIPBLANKS, DlgBtnChk(Settings.FixTrailingBlanks));
 
@@ -2504,7 +2502,8 @@ INT_PTR CALLBACK SelectDefLineEndingDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LP
       switch(LOWORD(wParam))
       {
         case IDOK: {
-            *piOption = (int)SendDlgItemMessage(hwnd,100,CB_GETCURSEL,0,0);
+            *piOption = (int)SendDlgItemMessage(hwnd,IDC_EOLMODELIST,CB_GETCURSEL,0,0);
+            Settings.WarnInconsistEOLs = (IsDlgButtonChecked(hwnd,IDC_WARNINCONSISTENTEOLS) == BST_CHECKED);
             Settings.FixLineEndings = (IsDlgButtonChecked(hwnd,IDC_CONSISTENTEOLS) == BST_CHECKED);
             Settings.FixTrailingBlanks = (IsDlgButtonChecked(hwnd,IDC_AUTOSTRIPBLANKS) == BST_CHECKED);
             EndDialog(hwnd,IDOK);
@@ -2525,20 +2524,15 @@ INT_PTR CALLBACK SelectDefLineEndingDlgProc(HWND hwnd,UINT umsg,WPARAM wParam,LP
 //
 //  SelectDefLineEndingDlg()
 //
-bool SelectDefLineEndingDlg(HWND hwnd,int *iOption)
+bool SelectDefLineEndingDlg(HWND hwnd, LPARAM piOption)
 {
+  INT_PTR const iResult = ThemedDialogBoxParam(Globals.hLngResContainer,
+                                               MAKEINTRESOURCE(IDD_MUI_DEFEOLMODE),
+                                               hwnd,
+                                               SelectDefLineEndingDlgProc,
+                                               piOption);
 
-  INT_PTR iResult;
-
-  iResult = ThemedDialogBoxParam(
-              Globals.hLngResContainer,
-              MAKEINTRESOURCE(IDD_MUI_DEFEOLMODE),
-              hwnd,
-              SelectDefLineEndingDlgProc,
-              (LPARAM)iOption);
-
-  return (iResult == IDOK) ? true : false;
-
+  return (iResult == IDOK);
 }
 
 
@@ -3207,7 +3201,7 @@ HDWP DeferCtlPos(HDWP hdwp, HWND hwndDlg, int nCtlId, int dx, int dy, UINT uFlag
 //
 //  MakeBitmapButton()
 //
-void MakeBitmapButton(HWND hwnd, int nCtlId, HINSTANCE hInstance, UINT uBmpId)
+void MakeBitmapButton(HWND hwnd, int nCtlId, HINSTANCE hInstance, WORD uBmpId)
 {
   HWND const hwndCtl = GetDlgItem(hwnd, nCtlId);
   HBITMAP hBmp = LoadImage(hInstance, MAKEINTRESOURCE(uBmpId), IMAGE_BITMAP, 0, 0, LR_CREATEDIBSECTION);
@@ -3532,8 +3526,8 @@ DLGTEMPLATE* LoadThemedDialogTemplate(LPCTSTR lpDialogTemplateID, HINSTANCE hIns
 INT_PTR ThemedDialogBoxParam(HINSTANCE hInstance, LPCTSTR lpTemplate, HWND hWndParent,
                              DLGPROC lpDialogFunc, LPARAM dwInitParam) 
 {
+  INT_PTR ret = IDABORT;
   DLGTEMPLATE* pDlgTemplate = LoadThemedDialogTemplate(lpTemplate, hInstance);
-  INT_PTR ret = (INT_PTR)NULL;
   if (pDlgTemplate) {
     ret = DialogBoxIndirectParam(hInstance, pDlgTemplate, hWndParent, lpDialogFunc, dwInitParam);
     FreeMem(pDlgTemplate);
@@ -3544,13 +3538,13 @@ INT_PTR ThemedDialogBoxParam(HINSTANCE hInstance, LPCTSTR lpTemplate, HWND hWndP
 HWND CreateThemedDialogParam(HINSTANCE hInstance, LPCTSTR lpTemplate, HWND hWndParent,
                              DLGPROC lpDialogFunc, LPARAM dwInitParam) 
 {
-  DLGTEMPLATE* pDlgTemplate = LoadThemedDialogTemplate(lpTemplate, hInstance);
   HWND hwnd = INVALID_HANDLE_VALUE;
+  DLGTEMPLATE* pDlgTemplate = LoadThemedDialogTemplate(lpTemplate, hInstance);
   if (pDlgTemplate) {
     hwnd = CreateDialogIndirectParam(hInstance, pDlgTemplate, hWndParent, lpDialogFunc, dwInitParam);
     FreeMem(pDlgTemplate);
   }
-  return hwnd;
+  return(hwnd);
 }
 
 //  End of Dialogs.c
